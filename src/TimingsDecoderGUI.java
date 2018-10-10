@@ -121,25 +121,11 @@ public class TimingsDecoderGUI extends JFrame
                 String input = txt_input.getText();
                 if(input.isEmpty() || !input.matches("^[0-9A-Fa-f]{96}$"))
                 {
-                    SwingUtilities.invokeLater(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            txt_input.setBackground(invalid_color);
-                        }
-                    });
+                    txt_input.setBackground(invalid_color);
                 }
                 else
                 {
-                    SwingUtilities.invokeLater(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            txt_input.setBackground(Color.WHITE);
-                        }
-                    });
+                    txt_input.setBackground(Color.WHITE);
                     
                     decoded_timings = TimingsDecoder.decode_timings(input);
 
@@ -342,24 +328,9 @@ public class TimingsDecoderGUI extends JFrame
                 continue;
 
             JTextField txt = timings_textfields.get(e.getKey());
-            // https://stackoverflow.com/a/11120747
-            SwingUtilities.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    should_update_timings_text = false;
-                    txt.setText(String.format("%d", e.getValue().intValue()));
-                }
-            });
-            SwingUtilities.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    should_update_timings_text = true;
-                }
-            });
+            should_update_timings_text = false;
+            txt.setText(String.format("%d", e.getValue().intValue()));
+            should_update_timings_text = true;
         }
     }
 
@@ -373,24 +344,9 @@ public class TimingsDecoderGUI extends JFrame
         for(Map.Entry<String, Long> e : mc_seq.entrySet())
         {
             JTextField txt = timings_textfields.get(e.getKey());
-            // https://stackoverflow.com/a/11120747
-            SwingUtilities.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    should_update_timings_text = false;
-                    txt.setText(String.format("0x%08X", e.getValue().intValue()));
-                }
-            });
-            SwingUtilities.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    should_update_timings_text = true;
-                }
-            });
+            should_update_timings_text = false;
+            txt.setText(String.format("0x%08X", e.getValue().intValue()));
+            should_update_timings_text = true;
         }
     }
 
@@ -429,25 +385,10 @@ public class TimingsDecoderGUI extends JFrame
 
         if(valid)
         {
-            // https://stackoverflow.com/a/11120747
-            SwingUtilities.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    should_update_input_text = false;
-                    txt_input.setText(TimingsDecoder.encode_timings(decoded_timings));
-                    txt_input.setCaretPosition(0);
-                }
-            });
-            SwingUtilities.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    should_update_input_text = true;
-                }
-            });
+            should_update_input_text = false;
+            txt_input.setText(TimingsDecoder.encode_timings(decoded_timings));
+            txt_input.setCaretPosition(0);
+            should_update_input_text = true;
         }
     }
 
@@ -490,29 +431,6 @@ public class TimingsDecoderGUI extends JFrame
      */
     private boolean update_timings(Object obj, Field[] fields)
     {
-        /*
-        // this blocks but idk why
-        RunnableFuture rf = new FutureTask<Boolean>(new Callable<Boolean>()
-        {
-            @Override
-            public Boolean call()
-            {
-
-            }
-        });
-
-        SwingUtilities.invokeLater(rf);
-
-        try {
-            return (boolean)rf.get();
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-            return false;
-        }
-        */
-
         try
         {
             Method get_sizes_method = obj.getClass().getMethod("get_sizes");
