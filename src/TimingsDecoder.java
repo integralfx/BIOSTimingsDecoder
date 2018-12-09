@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class TimingsDecoder
 {
@@ -863,7 +864,7 @@ public class TimingsDecoder
 			ARB_DRAM_TIMING2 = new ARB_DRAM_TIMING2_FORMAT(bytes_to_int(bytes, i)); i += 4;
 		}
 
-		// treats 4 bytes as an int in little endian
+		// treats 4 bytes as an unsigned int in little endian
 		private int bytes_to_int(byte[] bytes, int offset)
 		{
 			return Byte.toUnsignedInt(bytes[offset + 3]) << 24 |

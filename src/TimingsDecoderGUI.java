@@ -67,25 +67,25 @@ public class TimingsDecoderGUI extends JFrame
             @Override
             public void changedUpdate(DocumentEvent e)
             {
-                if(should_update_input_text)
-                    update_input_text();
+                if(should_update)
+                    update_output_text();
             }
         };
 
         add_input_panel();
-        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_D1", TimingsDecoder.SEQ_WR_CTL_D1_FORMAT.names, 80), 1, 0);
-        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_2", TimingsDecoder.SEQ_WR_CTL_2_FORMAT.names, 100), 1, 1);
-        add_timings_panel(new TimingsPanelInfo("SEQ_PMG_TIMING", TimingsDecoder.SEQ_PMG_TIMING_FORMAT.names, 120), 2, 0);
-        add_timings_panel(new TimingsPanelInfo("SEQ_RAS_TIMING", TimingsDecoder.SEQ_RAS_TIMING_FORMAT.names, 60), 2, 1);
+        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_D1", TimingsDecoder.SEQ_WR_CTL_D1_FORMAT.names, 80), 2, 0);
+        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_2", TimingsDecoder.SEQ_WR_CTL_2_FORMAT.names, 100), 2, 1);
+        add_timings_panel(new TimingsPanelInfo("SEQ_PMG_TIMING", TimingsDecoder.SEQ_PMG_TIMING_FORMAT.names, 120), 3, 0);
+        add_timings_panel(new TimingsPanelInfo("SEQ_RAS_TIMING", TimingsDecoder.SEQ_RAS_TIMING_FORMAT.names, 60), 3, 1);
         TimingsPanelInfo[] tp = new TimingsPanelInfo[2];
         tp[0] = new TimingsPanelInfo("SEQ_CAS_TIMING", TimingsDecoder.SEQ_CAS_TIMING_FORMAT.names, 60);
         tp[1] = new TimingsPanelInfo("SEQ_MISC_TIMING", TimingsDecoder.SEQ_MISC_TIMING_FORMAT_R9.names, 70);
-        add_timings_panel(tp, 3, 0);
+        add_timings_panel(tp, 4, 0);
         tp[0] = new TimingsPanelInfo("SEQ_MISC_TIMING2", TimingsDecoder.SEQ_MISC_TIMING2_FORMAT.names, 80);
         tp[1] = new TimingsPanelInfo("ARB_DRAM_TIMING", TimingsDecoder.ARB_DRAM_TIMING_FORMAT.names, 80);
-        add_timings_panel(tp, 3, 1);
-        add_timings_panel(new TimingsPanelInfo("ARB_DRAM_TIMING2", TimingsDecoder.ARB_DRAM_TIMING2_FORMAT.names, 70), 4, 0);
-        add_seq_misc_timings_panel(4, 1, 100);
+        add_timings_panel(tp, 4, 1);
+        add_timings_panel(new TimingsPanelInfo("ARB_DRAM_TIMING2", TimingsDecoder.ARB_DRAM_TIMING2_FORMAT.names, 70), 5, 0);
+        add_seq_misc_timings_panel(5, 1, 100);
 
         pack();
 		setResizable(false);
@@ -102,15 +102,15 @@ public class TimingsDecoderGUI extends JFrame
 
     private void add_input_panel()
     {
-        JPanel panel = new JPanel(new FlowLayout());
+        JPanel p = new JPanel(new FlowLayout());
 
         JLabel lbl_input = new JLabel("Input timings:");
-        panel.add(lbl_input);
+        p.add(lbl_input);
 
         txt_input = new JTextArea(1, 50);
         JScrollPane scroll = new JScrollPane(txt_input, JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
                                              JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        panel.add(scroll);
+        p.add(scroll);
 
         JButton btn_decode = new JButton("Decode");
         btn_decode.addActionListener(new ActionListener()
@@ -121,26 +121,40 @@ public class TimingsDecoderGUI extends JFrame
                 String input = txt_input.getText();
                 if(input.isEmpty() || !input.matches("^[0-9A-Fa-f]{96}$"))
                 {
-                    txt_input.setBackground(invalid_color);
+                    txt_output.setBackground(invalid_color);
                 }
                 else
                 {
-                    txt_input.setBackground(Color.WHITE);
+                    txt_output.setBackground(Color.WHITE);
+                    txt_output.setText(input);
                     
                     decoded_timings = TimingsDecoder.decode_timings(input);
 
-                    if(should_update_timings_text)
-                        update_all_timings_text();
+                    should_update = false;
+                    update_all_timings_text();
+                    should_update = true;
                 }
             }
         });
-        panel.add(btn_decode);
+        p.add(btn_decode);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0; gbc.gridy = 0;
         gbc.insets = padding;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
-        main_panel.add(panel, gbc);
+        main_panel.add(p, gbc);
+
+        p = new JPanel(new FlowLayout());
+
+        JLabel lbl_output = new JLabel("Output:");
+        p.add(lbl_output);
+
+        txt_output = new JTextField(65);
+        txt_output.setEditable(false);
+        p.add(txt_output);
+
+        gbc.gridy = 1;
+        main_panel.add(p, gbc);
     }
 
     private void add_timings_panel(TimingsPanelInfo tp, int row, int col)
@@ -300,6 +314,7 @@ public class TimingsDecoderGUI extends JFrame
     }
 
     /*
+     * TODO: fix me
      * updates each of the timings as the user changes
      * the input hex string
      */
@@ -328,9 +343,7 @@ public class TimingsDecoderGUI extends JFrame
                 continue;
 
             JTextField txt = timings_textfields.get(e.getKey());
-            should_update_timings_text = false;
-            txt.setText(String.format("%d", e.getValue().intValue()));
-            should_update_timings_text = true;
+            txt.setText(String.format("%d", Byte.toUnsignedInt(e.getValue())));
         }
     }
 
@@ -344,9 +357,7 @@ public class TimingsDecoderGUI extends JFrame
         for(Map.Entry<String, Long> e : mc_seq.entrySet())
         {
             JTextField txt = timings_textfields.get(e.getKey());
-            should_update_timings_text = false;
             txt.setText(String.format("0x%08X", e.getValue().intValue()));
-            should_update_timings_text = true;
         }
     }
 
@@ -354,7 +365,7 @@ public class TimingsDecoderGUI extends JFrame
      * updates the input hex string as the user
      * changes each of the timings
      */
-    private void update_input_text()
+    private void update_output_text()
     {
         boolean valid = true;
 
@@ -385,10 +396,8 @@ public class TimingsDecoderGUI extends JFrame
 
         if(valid)
         {
-            should_update_input_text = false;
-            txt_input.setText(TimingsDecoder.encode_timings(decoded_timings));
-            txt_input.setCaretPosition(0);
-            should_update_input_text = true;
+            txt_output.setText(TimingsDecoder.encode_timings(decoded_timings));
+            txt_output.setCaretPosition(0);
         }
     }
 
@@ -500,11 +509,13 @@ public class TimingsDecoderGUI extends JFrame
     // stores the name of the timing and the JTextField associated with it
     private HashMap<String, JTextField> timings_textfields = new HashMap<>();
     private JTextArea txt_input;
-    /* 
-     * flag to distinguish between programmatic and user changes
-     * i.e. calling setText() and the user actually inputting something
-     */
-    private boolean should_update_input_text = true,
-                    should_update_timings_text = true;
+    private JTextField txt_output;
     private final DocumentListener timings_doc_listener;
+    /*
+     * to differentiate between setText() and 
+     * the user inputting something
+     * should_update should be false when calling setText()
+     * and true when the user inputs something
+     */
+    private boolean should_update = false;
 }
