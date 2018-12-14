@@ -4,12 +4,17 @@ import java.util.Map;
 
 public class TimingsDecoder
 {
-	public static VBIOS_STRAP_R9 decode_timings(String timings)
+	public static VBIOS_STRAP_R9 decode_r9_timings(String timings)
 	{
 		return new VBIOS_STRAP_R9(hex_string_to_bytes(timings));
 	}
 
-	public static String encode_timings(VBIOS_STRAP_R9 timings)
+	public static VBIOS_STRAP_RX decode_rx_timings(String timings)
+	{
+		return new VBIOS_STRAP_RX(hex_string_to_bytes(timings));
+	}
+
+	public static String encode_r9_timings(VBIOS_STRAP_R9 timings)
 	{
 		StringBuilder str = new StringBuilder();
 
@@ -20,6 +25,26 @@ public class TimingsDecoder
 		str.append(timings.SEQ_MISC_TIMING.to_hex_string());
 		str.append(timings.SEQ_MISC_TIMING2.to_hex_string());
 		str.append(timings.SEQ_PMG_TIMING.to_hex_string());
+		str.append(String.format("%08X", (int)timings.SEQ_MISC1));
+		str.append(String.format("%08X", (int)timings.SEQ_MISC3));
+		str.append(String.format("%08X", (int)timings.SEQ_MISC8));
+		str.append(timings.ARB_DRAM_TIMING.to_hex_string());
+		str.append(timings.ARB_DRAM_TIMING2.to_hex_string());
+
+		return str.toString();
+	}
+
+	public static String encode_rx_timings(VBIOS_STRAP_RX timings)
+	{
+		StringBuilder str = new StringBuilder();
+
+		str.append(timings.SEQ_WR_CTL_D1.to_hex_string());
+		str.append(timings.SEQ_WR_CTL_2.to_hex_string());
+		str.append(timings.SEQ_PMG_TIMING.to_hex_string());
+		str.append(timings.SEQ_RAS_TIMING.to_hex_string());
+		str.append(timings.SEQ_CAS_TIMING.to_hex_string());
+		str.append(timings.SEQ_MISC_TIMING.to_hex_string());
+		str.append(timings.SEQ_MISC_TIMING2.to_hex_string());
 		str.append(String.format("%08X", (int)timings.SEQ_MISC1));
 		str.append(String.format("%08X", (int)timings.SEQ_MISC3));
 		str.append(String.format("%08X", (int)timings.SEQ_MISC8));
@@ -41,6 +66,15 @@ public class TimingsDecoder
 		}
 
 		return data;
+	}
+
+	// treats 4 bytes as an unsigned int in little endian
+	private static int bytes_to_int(byte[] bytes, int offset)
+	{
+		return Byte.toUnsignedInt(bytes[offset + 3]) << 24 |
+			   Byte.toUnsignedInt(bytes[offset + 2]) << 16 |
+			   Byte.toUnsignedInt(bytes[offset + 1]) << 8 |
+			   Byte.toUnsignedInt(bytes[offset]);
 	}
 
 	static class SEQ_WR_CTL_D1_FORMAT
@@ -863,14 +897,56 @@ public class TimingsDecoder
 			ARB_DRAM_TIMING = new ARB_DRAM_TIMING_FORMAT(bytes_to_int(bytes, i)); i += 4;
 			ARB_DRAM_TIMING2 = new ARB_DRAM_TIMING2_FORMAT(bytes_to_int(bytes, i)); i += 4;
 		}
+	}
 
-		// treats 4 bytes as an unsigned int in little endian
-		private int bytes_to_int(byte[] bytes, int offset)
+	static class VBIOS_STRAP_RX
+	{
+		public static final int size = 48;
+
+		public SEQ_WR_CTL_D1_FORMAT SEQ_WR_CTL_D1;
+		public SEQ_WR_CTL_2_FORMAT SEQ_WR_CTL_2;
+		public SEQ_PMG_TIMING_FORMAT SEQ_PMG_TIMING;
+		public SEQ_RAS_TIMING_FORMAT SEQ_RAS_TIMING;
+		public SEQ_CAS_TIMING_FORMAT SEQ_CAS_TIMING;
+		public SEQ_MISC_TIMING_FORMAT_RX SEQ_MISC_TIMING;
+		public SEQ_MISC_TIMING2_FORMAT SEQ_MISC_TIMING2;
+		public long SEQ_MISC1;		// uint32
+		public long SEQ_MISC3;		// uint32
+		public long SEQ_MISC8;		// uint32
+		public ARB_DRAM_TIMING_FORMAT ARB_DRAM_TIMING;
+		public ARB_DRAM_TIMING2_FORMAT ARB_DRAM_TIMING2;
+
+		public VBIOS_STRAP_RX()
 		{
-			return Byte.toUnsignedInt(bytes[offset + 3]) << 24 |
-				   Byte.toUnsignedInt(bytes[offset + 2]) << 16 |
-				   Byte.toUnsignedInt(bytes[offset + 1]) << 8 |
-				   Byte.toUnsignedInt(bytes[offset]);
+			SEQ_WR_CTL_D1 = new SEQ_WR_CTL_D1_FORMAT(0);
+			SEQ_WR_CTL_2 = new SEQ_WR_CTL_2_FORMAT(0);
+			SEQ_PMG_TIMING = new SEQ_PMG_TIMING_FORMAT(0);
+			SEQ_RAS_TIMING = new SEQ_RAS_TIMING_FORMAT(0);
+			SEQ_CAS_TIMING = new SEQ_CAS_TIMING_FORMAT(0);
+			SEQ_MISC_TIMING = new SEQ_MISC_TIMING_FORMAT_RX(0);
+			SEQ_MISC_TIMING2 = new SEQ_MISC_TIMING2_FORMAT(0);
+			ARB_DRAM_TIMING = new ARB_DRAM_TIMING_FORMAT(0);
+			ARB_DRAM_TIMING2 = new ARB_DRAM_TIMING2_FORMAT(0);
+		}
+
+		public VBIOS_STRAP_RX(byte[] bytes)
+		{
+			if(bytes.length != size) 
+				throw new IllegalArgumentException(String.format("VBIOS_STRAP_RX: expected %d bytes, got %d bytes", size, bytes.length));
+				
+			int i = 0;
+			SEQ_WR_CTL_D1 = new SEQ_WR_CTL_D1_FORMAT(bytes_to_int(bytes, i)); i += 4;
+			SEQ_WR_CTL_2 = new SEQ_WR_CTL_2_FORMAT(bytes_to_int(bytes, i)); i += 4;
+			SEQ_PMG_TIMING = new SEQ_PMG_TIMING_FORMAT(bytes_to_int(bytes, i)); i += 4;
+			SEQ_RAS_TIMING = new SEQ_RAS_TIMING_FORMAT(bytes_to_int(bytes, i)); i += 4;
+			SEQ_CAS_TIMING = new SEQ_CAS_TIMING_FORMAT(bytes_to_int(bytes, i)); i += 4;
+			SEQ_MISC_TIMING = new SEQ_MISC_TIMING_FORMAT_RX(bytes_to_int(bytes, i)); i += 4;
+			SEQ_MISC_TIMING2 = new SEQ_MISC_TIMING2_FORMAT(bytes_to_int(bytes, i)); i += 4;
+			SEQ_MISC1 = bytes_to_int(bytes, i); i += 4;
+			SEQ_MISC3 = bytes_to_int(bytes, i); i += 4;
+			SEQ_MISC8 = bytes_to_int(bytes, i); i += 4;
+			ARB_DRAM_TIMING = new ARB_DRAM_TIMING_FORMAT(bytes_to_int(bytes, i)); i += 4;
+			ARB_DRAM_TIMING2 = new ARB_DRAM_TIMING2_FORMAT(bytes_to_int(bytes, i)); i += 4;
 		}
 	}
 }

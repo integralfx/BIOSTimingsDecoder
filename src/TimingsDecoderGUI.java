@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
@@ -17,10 +18,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -46,7 +49,7 @@ public class TimingsDecoderGUI extends JFrame
 
     public TimingsDecoderGUI()
     {
-        super("Timings Decoder");
+        super("Timings Decoder v1.1");
 
         main_panel.setLayout(new GridBagLayout());
 
@@ -73,19 +76,20 @@ public class TimingsDecoderGUI extends JFrame
         };
 
         add_input_panel();
-        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_D1", TimingsDecoder.SEQ_WR_CTL_D1_FORMAT.names, 80), 2, 0);
+        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_D1", TimingsDecoder.SEQ_WR_CTL_D1_FORMAT.names, 90), 2, 0);
         add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_2", TimingsDecoder.SEQ_WR_CTL_2_FORMAT.names, 100), 2, 1);
         add_timings_panel(new TimingsPanelInfo("SEQ_PMG_TIMING", TimingsDecoder.SEQ_PMG_TIMING_FORMAT.names, 120), 3, 0);
-        add_timings_panel(new TimingsPanelInfo("SEQ_RAS_TIMING", TimingsDecoder.SEQ_RAS_TIMING_FORMAT.names, 60), 3, 1);
         TimingsPanelInfo[] tp = new TimingsPanelInfo[2];
-        tp[0] = new TimingsPanelInfo("SEQ_CAS_TIMING", TimingsDecoder.SEQ_CAS_TIMING_FORMAT.names, 60);
-        tp[1] = new TimingsPanelInfo("SEQ_MISC_TIMING", TimingsDecoder.SEQ_MISC_TIMING_FORMAT_R9.names, 70);
+        tp[0] = new TimingsPanelInfo("SEQ_RAS_TIMING", TimingsDecoder.SEQ_RAS_TIMING_FORMAT.names, 70);
+        tp[1] = new TimingsPanelInfo("SEQ_CAS_TIMING", TimingsDecoder.SEQ_CAS_TIMING_FORMAT.names, 50);
+        add_timings_panel(tp, 3, 1);
+        tp[0] = new TimingsPanelInfo("SEQ_MISC_TIMING", TimingsDecoder.SEQ_MISC_TIMING_FORMAT_R9.names, 70);
+        tp[1] = new TimingsPanelInfo("SEQ_MISC_TIMING2", TimingsDecoder.SEQ_MISC_TIMING2_FORMAT.names, 70);
         add_timings_panel(tp, 4, 0);
-        tp[0] = new TimingsPanelInfo("SEQ_MISC_TIMING2", TimingsDecoder.SEQ_MISC_TIMING2_FORMAT.names, 80);
-        tp[1] = new TimingsPanelInfo("ARB_DRAM_TIMING", TimingsDecoder.ARB_DRAM_TIMING_FORMAT.names, 80);
+        tp[0] = new TimingsPanelInfo("ARB_DRAM_TIMING", TimingsDecoder.ARB_DRAM_TIMING_FORMAT.names, 80);
+        tp[1] = new TimingsPanelInfo("ARB_DRAM_TIMING2", TimingsDecoder.ARB_DRAM_TIMING2_FORMAT.names, 80);
         add_timings_panel(tp, 4, 1);
-        add_timings_panel(new TimingsPanelInfo("ARB_DRAM_TIMING2", TimingsDecoder.ARB_DRAM_TIMING2_FORMAT.names, 70), 5, 0);
-        add_seq_misc_timings_panel(5, 1, 100);
+        //add_seq_misc_timings_panel(5, 1, 100);
 
         pack();
 		setResizable(false);
@@ -104,8 +108,17 @@ public class TimingsDecoderGUI extends JFrame
     {
         JPanel p = new JPanel(new FlowLayout());
 
-        JLabel lbl_input = new JLabel("Input timings:");
+        JLabel lbl_input = new JLabel("Input:");
         p.add(lbl_input);
+
+        JRadioButton rdo_r9 = new JRadioButton("R9"),
+                     rdo_rx = new JRadioButton("RX");
+        rdo_r9.setSelected(true);
+        ButtonGroup grp = new ButtonGroup();
+        grp.add(rdo_r9);
+        grp.add(rdo_rx);
+        p.add(rdo_r9);
+        p.add(rdo_rx);
 
         txt_input = new JTextArea(1, 50);
         JScrollPane scroll = new JScrollPane(txt_input, JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
@@ -128,7 +141,10 @@ public class TimingsDecoderGUI extends JFrame
                     txt_output.setBackground(Color.WHITE);
                     txt_output.setText(input);
                     
-                    decoded_timings = TimingsDecoder.decode_timings(input);
+                    if(is_r9_timings)
+                        r9_timings = TimingsDecoder.decode_r9_timings(input);
+                    else
+                        rx_timings = TimingsDecoder.decode_rx_timings(input);
 
                     should_update = false;
                     update_all_timings_text();
@@ -137,6 +153,17 @@ public class TimingsDecoderGUI extends JFrame
             }
         });
         p.add(btn_decode);
+
+        ActionListener listener = new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                is_r9_timings = rdo_r9.isSelected();
+            }
+        };
+        rdo_r9.addActionListener(listener);
+        rdo_rx.addActionListener(listener);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0; gbc.gridy = 0;
@@ -157,6 +184,17 @@ public class TimingsDecoderGUI extends JFrame
         main_panel.add(p, gbc);
     }
 
+    private boolean is_main_timing(String timing)
+    {
+        for(String t : main_timings)
+        {
+            if(t.equals(timing)) 
+                return true;
+        }
+
+        return false;
+    }
+
     private void add_timings_panel(TimingsPanelInfo tp, int row, int col)
     {
         JPanel panel = new JPanel();
@@ -172,24 +210,31 @@ public class TimingsDecoderGUI extends JFrame
         panel.add(panel_title, gbc);
 
         // add each timing
-        for(int i = 0; i < tp.timings_names.length; i++)
+        int count = 0;
+        for(String timing : tp.timings_names)
         {
+            if(timing.startsWith("Pad"))
+                continue;
+
             JPanel panel_row = new JPanel(new FlowLayout());
 
-            JLabel lbl_row = new JLabel(tp.timings_names[i] + ":");
+            JLabel lbl_row = new JLabel(timing + ":");
             lbl_row.setPreferredSize(new Dimension(tp.label_width, lbl_row.getPreferredSize().height));
+            Font normal = lbl_row.getFont().deriveFont(Font.PLAIN);
+            if(is_main_timing(timing)) 
+                normal = new Font(normal.getFontName(), Font.BOLD, normal.getSize() + 1);
+            lbl_row.setFont(normal);
             panel_row.add(lbl_row);
             
             JTextField txt_row = new JTextField(2);
             txt_row.getDocument().addDocumentListener(timings_doc_listener);
-            if(tp.timings_names[i].startsWith("Pad"))
-                txt_row.setEditable(false);
             panel_row.add(txt_row);
 
             gbc = new GridBagConstraints();
-            gbc.gridx = i / 5; gbc.gridy = (i % 5) + 1; // + 1 as title takes up a row
+            gbc.gridx = count / 5; gbc.gridy = (count % 5) + 1; // + 1 as title takes up a row
             panel.add(panel_row, gbc);
-            timings_textfields.put(tp.timings_names[i], txt_row);
+            timings_textfields.put(timing, txt_row);
+            count++;
         }
 
         panel.setBorder(new LineBorder(Color.GRAY));
@@ -229,24 +274,32 @@ public class TimingsDecoderGUI extends JFrame
             panel.add(panel_title, gbc);
     
             // add each timing
-            for(int i = 0; i < tp.timings_names.length; i++)
+            int count = 0;
+            for(String timing : tp.timings_names)
             {
+                if(timing.startsWith("Pad"))
+                    continue;
+
                 JPanel panel_row = new JPanel(new FlowLayout());
-    
-                JLabel lbl_row = new JLabel(tp.timings_names[i] + ":");
+
+                JLabel lbl_row = new JLabel(timing + ":");
                 lbl_row.setPreferredSize(new Dimension(tp.label_width, lbl_row.getPreferredSize().height));
+                // main timings are bold
+                Font normal = lbl_row.getFont().deriveFont(Font.PLAIN);
+                if(is_main_timing(timing)) 
+                    normal = new Font(normal.getFontName(), Font.BOLD, normal.getSize() + 1);
+                lbl_row.setFont(normal);
                 panel_row.add(lbl_row);
                 
                 JTextField txt_row = new JTextField(2);
                 txt_row.getDocument().addDocumentListener(timings_doc_listener);
-                if(tp.timings_names[i].startsWith("Pad"))
-                    txt_row.setEditable(false);
                 panel_row.add(txt_row);
-    
+
                 gbc = new GridBagConstraints();
-                gbc.gridx = i / 5; gbc.gridy = (i % 5) + 1; // + 1 as title takes up a row
+                gbc.gridx = count / 5; gbc.gridy = (count % 5) + 1; // + 1 as title takes up a row
                 panel.add(panel_row, gbc);
-                timings_textfields.put(tp.timings_names[i], txt_row);
+                timings_textfields.put(timing, txt_row);
+                count++;
             }
     
             panel.setBorder(new LineBorder(Color.GRAY));
@@ -314,22 +367,36 @@ public class TimingsDecoderGUI extends JFrame
     }
 
     /*
-     * TODO: fix me
      * updates each of the timings as the user changes
      * the input hex string
      */
     private void update_all_timings_text()
     {
-        update_timings_text(decoded_timings.SEQ_WR_CTL_D1.get_timings());
-        update_timings_text(decoded_timings.SEQ_WR_CTL_2.get_timings());
-        update_timings_text(decoded_timings.SEQ_PMG_TIMING.get_timings());
-        update_timings_text(decoded_timings.SEQ_RAS_TIMING.get_timings());
-        update_timings_text(decoded_timings.SEQ_CAS_TIMING.get_timings());
-        update_timings_text(decoded_timings.SEQ_MISC_TIMING.get_timings());
-        update_timings_text(decoded_timings.SEQ_MISC_TIMING2.get_timings());
-        update_timings_text(decoded_timings.ARB_DRAM_TIMING.get_timings());
-        update_timings_text(decoded_timings.ARB_DRAM_TIMING2.get_timings());
-        update_seq_misc_timings_text();
+        if(is_r9_timings)
+        {
+            update_timings_text(r9_timings.SEQ_WR_CTL_D1.get_timings());
+            update_timings_text(r9_timings.SEQ_WR_CTL_2.get_timings());
+            update_timings_text(r9_timings.SEQ_PMG_TIMING.get_timings());
+            update_timings_text(r9_timings.SEQ_RAS_TIMING.get_timings());
+            update_timings_text(r9_timings.SEQ_CAS_TIMING.get_timings());
+            update_timings_text(r9_timings.SEQ_MISC_TIMING.get_timings());
+            update_timings_text(r9_timings.SEQ_MISC_TIMING2.get_timings());
+            update_timings_text(r9_timings.ARB_DRAM_TIMING.get_timings());
+            update_timings_text(r9_timings.ARB_DRAM_TIMING2.get_timings());
+            //update_seq_misc_timings_text();
+        }
+        else
+        {
+            update_timings_text(rx_timings.SEQ_WR_CTL_D1.get_timings());
+            update_timings_text(rx_timings.SEQ_WR_CTL_2.get_timings());
+            update_timings_text(rx_timings.SEQ_PMG_TIMING.get_timings());
+            update_timings_text(rx_timings.SEQ_RAS_TIMING.get_timings());
+            update_timings_text(rx_timings.SEQ_CAS_TIMING.get_timings());
+            update_timings_text(rx_timings.SEQ_MISC_TIMING.get_timings());
+            update_timings_text(rx_timings.SEQ_MISC_TIMING2.get_timings());
+            update_timings_text(rx_timings.ARB_DRAM_TIMING.get_timings());
+            update_timings_text(rx_timings.ARB_DRAM_TIMING2.get_timings());
+        }
     }
 
     /*
@@ -350,9 +417,9 @@ public class TimingsDecoderGUI extends JFrame
     private void update_seq_misc_timings_text()
     {
         LinkedHashMap<String, Long> mc_seq = new LinkedHashMap<>();
-        mc_seq.put("MC_SEQ_MISC1", decoded_timings.SEQ_MISC1);
-        mc_seq.put("MC_SEQ_MISC3", decoded_timings.SEQ_MISC3);
-        mc_seq.put("MC_SEQ_MISC8", decoded_timings.SEQ_MISC8);
+        mc_seq.put("MC_SEQ_MISC1", r9_timings.SEQ_MISC1);
+        mc_seq.put("MC_SEQ_MISC3", r9_timings.SEQ_MISC3);
+        mc_seq.put("MC_SEQ_MISC8", r9_timings.SEQ_MISC8);
 
         for(Map.Entry<String, Long> e : mc_seq.entrySet())
         {
@@ -369,34 +436,62 @@ public class TimingsDecoderGUI extends JFrame
     {
         boolean valid = true;
 
-        if(!update_timings(decoded_timings.SEQ_WR_CTL_D1, decoded_timings.SEQ_WR_CTL_D1.getClass().getFields()))
-            valid = false;
-        if(!update_timings(decoded_timings.SEQ_WR_CTL_2, decoded_timings.SEQ_WR_CTL_2.getClass().getFields()))
-            valid = false;
-        if(!update_timings(decoded_timings.SEQ_PMG_TIMING, decoded_timings.SEQ_PMG_TIMING.getClass().getFields()))
-            valid = false;
-        if(!update_timings(decoded_timings.SEQ_RAS_TIMING, decoded_timings.SEQ_RAS_TIMING.getClass().getFields()))
-            valid = false;
-        if(!update_timings(decoded_timings.SEQ_CAS_TIMING, decoded_timings.SEQ_CAS_TIMING.getClass().getFields()))
-            valid = false;
-        if(!update_timings(decoded_timings.SEQ_MISC_TIMING, decoded_timings.SEQ_MISC_TIMING.getClass().getFields()))
-            valid = false;
-        if(!update_timings(decoded_timings.SEQ_MISC_TIMING2, decoded_timings.SEQ_MISC_TIMING2.getClass().getFields()))
-            valid = false;
-        if(!update_timings(decoded_timings.ARB_DRAM_TIMING, decoded_timings.ARB_DRAM_TIMING.getClass().getFields()))
-            valid = false;
-        if(!update_timings(decoded_timings.ARB_DRAM_TIMING2, decoded_timings.ARB_DRAM_TIMING2.getClass().getFields()))
-            valid = false;
-        if(!validate_mc_seq("MC_SEQ_MISC1"))
-            valid = false;
-        if(!validate_mc_seq("MC_SEQ_MISC3"))
-            valid = false;
-        if(!validate_mc_seq("MC_SEQ_MISC8"))
-            valid = false;
+        if(is_r9_timings)
+        {
+            if(!update_timings(r9_timings.SEQ_WR_CTL_D1, r9_timings.SEQ_WR_CTL_D1.getClass().getFields()))
+                valid = false;
+            if(!update_timings(r9_timings.SEQ_WR_CTL_2, r9_timings.SEQ_WR_CTL_2.getClass().getFields()))
+                valid = false;
+            if(!update_timings(r9_timings.SEQ_PMG_TIMING, r9_timings.SEQ_PMG_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(r9_timings.SEQ_RAS_TIMING, r9_timings.SEQ_RAS_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(r9_timings.SEQ_CAS_TIMING, r9_timings.SEQ_CAS_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(r9_timings.SEQ_MISC_TIMING, r9_timings.SEQ_MISC_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(r9_timings.SEQ_MISC_TIMING2, r9_timings.SEQ_MISC_TIMING2.getClass().getFields()))
+                valid = false;
+            if(!update_timings(r9_timings.ARB_DRAM_TIMING, r9_timings.ARB_DRAM_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(r9_timings.ARB_DRAM_TIMING2, r9_timings.ARB_DRAM_TIMING2.getClass().getFields()))
+                valid = false;
+            // if(!validate_mc_seq("MC_SEQ_MISC1"))
+            //     valid = false;
+            // if(!validate_mc_seq("MC_SEQ_MISC3"))
+            //     valid = false;
+            // if(!validate_mc_seq("MC_SEQ_MISC8"))
+            //     valid = false;
+        }
+        else
+        {
+            if(!update_timings(rx_timings.SEQ_WR_CTL_D1, rx_timings.SEQ_WR_CTL_D1.getClass().getFields()))
+                valid = false;
+            if(!update_timings(rx_timings.SEQ_WR_CTL_2, rx_timings.SEQ_WR_CTL_2.getClass().getFields()))
+                valid = false;
+            if(!update_timings(rx_timings.SEQ_PMG_TIMING, rx_timings.SEQ_PMG_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(rx_timings.SEQ_RAS_TIMING, rx_timings.SEQ_RAS_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(rx_timings.SEQ_CAS_TIMING, rx_timings.SEQ_CAS_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(rx_timings.SEQ_MISC_TIMING, rx_timings.SEQ_MISC_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(rx_timings.SEQ_MISC_TIMING2, rx_timings.SEQ_MISC_TIMING2.getClass().getFields()))
+                valid = false;
+            if(!update_timings(rx_timings.ARB_DRAM_TIMING, rx_timings.ARB_DRAM_TIMING.getClass().getFields()))
+                valid = false;
+            if(!update_timings(rx_timings.ARB_DRAM_TIMING2, rx_timings.ARB_DRAM_TIMING2.getClass().getFields()))
+                valid = false;
+        }
 
         if(valid)
-        {
-            txt_output.setText(TimingsDecoder.encode_timings(decoded_timings));
+        {   
+            if(is_r9_timings)
+                txt_output.setText(TimingsDecoder.encode_r9_timings(r9_timings));
+            else
+                txt_output.setText(TimingsDecoder.encode_rx_timings(rx_timings));
+
             txt_output.setCaretPosition(0);
         }
     }
@@ -424,7 +519,7 @@ public class TimingsDecoderGUI extends JFrame
             {
                 txt.setBackground(Color.WHITE);
                 // remove leading 0x
-                decoded_timings.SEQ_MISC1 = Long.valueOf(str.substring(2), 16);
+                r9_timings.SEQ_MISC1 = Long.valueOf(str.substring(2), 16);
             }
         }
 
@@ -504,8 +599,11 @@ public class TimingsDecoderGUI extends JFrame
     private final Insets padding = new Insets(5, 5, 5, 5);
     private final Color title_color = new Color(0xFFAFAFFF),
                         invalid_color = new Color(0xFFFFAFAF);
+    // from TechPowerUp VGA BIOS database
+    private final String[] main_timings = { "TRCDW", "TRCDWA", "TRCDR", "TRCDRA", "TRC", "TCL", "TRFC" };
     private final Container main_panel = getContentPane();
-    private TimingsDecoder.VBIOS_STRAP_R9 decoded_timings = new TimingsDecoder.VBIOS_STRAP_R9();
+    private TimingsDecoder.VBIOS_STRAP_R9 r9_timings = new TimingsDecoder.VBIOS_STRAP_R9();
+    private TimingsDecoder.VBIOS_STRAP_RX rx_timings = new TimingsDecoder.VBIOS_STRAP_RX();
     // stores the name of the timing and the JTextField associated with it
     private HashMap<String, JTextField> timings_textfields = new HashMap<>();
     private JTextArea txt_input;
@@ -518,4 +616,5 @@ public class TimingsDecoderGUI extends JFrame
      * and true when the user inputs something
      */
     private boolean should_update = false;
+    private boolean is_r9_timings = true;
 }
