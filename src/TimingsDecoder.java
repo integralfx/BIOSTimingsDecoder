@@ -45,9 +45,9 @@ public class TimingsDecoder
 		str.append(timings.SEQ_CAS_TIMING.to_hex_string());
 		str.append(timings.SEQ_MISC_TIMING.to_hex_string());
 		str.append(timings.SEQ_MISC_TIMING2.to_hex_string());
-		str.append(String.format("%08X", (int)timings.SEQ_MISC1));
-		str.append(String.format("%08X", (int)timings.SEQ_MISC3));
-		str.append(String.format("%08X", (int)timings.SEQ_MISC8));
+		str.append(uint32_to_hex_string((int)timings.SEQ_MISC1));
+		str.append(uint32_to_hex_string((int)timings.SEQ_MISC3));
+		str.append(uint32_to_hex_string((int)timings.SEQ_MISC8));
 		str.append(timings.ARB_DRAM_TIMING.to_hex_string());
 		str.append(timings.ARB_DRAM_TIMING2.to_hex_string());
 
@@ -75,6 +75,13 @@ public class TimingsDecoder
 			   Byte.toUnsignedInt(bytes[offset + 2]) << 16 |
 			   Byte.toUnsignedInt(bytes[offset + 1]) << 8 |
 			   Byte.toUnsignedInt(bytes[offset]);
+	}
+
+	// treats n as an unsigned int in little endian
+	private static String uint32_to_hex_string(int n)
+	{
+		String s = String.format("%08X", n);
+		return s.substring(6, 8) + s.substring(4, 6) + s.substring(2, 4) + s.substring(0, 2);
 	}
 
 	static class SEQ_WR_CTL_D1_FORMAT

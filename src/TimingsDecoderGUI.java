@@ -49,7 +49,7 @@ public class TimingsDecoderGUI extends JFrame
 
     public TimingsDecoderGUI()
     {
-        super("Timings Decoder v1.1");
+        super("Timings Decoder v1.1.1");
 
         main_panel.setLayout(new GridBagLayout());
 
@@ -89,7 +89,7 @@ public class TimingsDecoderGUI extends JFrame
         tp[0] = new TimingsPanelInfo("ARB_DRAM_TIMING", TimingsDecoder.ARB_DRAM_TIMING_FORMAT.names, 80);
         tp[1] = new TimingsPanelInfo("ARB_DRAM_TIMING2", TimingsDecoder.ARB_DRAM_TIMING2_FORMAT.names, 80);
         add_timings_panel(tp, 4, 1);
-        //add_seq_misc_timings_panel(5, 1, 100);
+        //add_seq_misc_timings_panel(5, 0, 100);
 
         pack();
 		setResizable(false);
@@ -396,6 +396,7 @@ public class TimingsDecoderGUI extends JFrame
             update_timings_text(rx_timings.SEQ_MISC_TIMING2.get_timings());
             update_timings_text(rx_timings.ARB_DRAM_TIMING.get_timings());
             update_timings_text(rx_timings.ARB_DRAM_TIMING2.get_timings());
+            //update_seq_misc_timings_text();
         }
     }
 
@@ -417,9 +418,18 @@ public class TimingsDecoderGUI extends JFrame
     private void update_seq_misc_timings_text()
     {
         LinkedHashMap<String, Long> mc_seq = new LinkedHashMap<>();
-        mc_seq.put("MC_SEQ_MISC1", r9_timings.SEQ_MISC1);
-        mc_seq.put("MC_SEQ_MISC3", r9_timings.SEQ_MISC3);
-        mc_seq.put("MC_SEQ_MISC8", r9_timings.SEQ_MISC8);
+        if(is_r9_timings)
+        {
+            mc_seq.put("MC_SEQ_MISC1", r9_timings.SEQ_MISC1);
+            mc_seq.put("MC_SEQ_MISC3", r9_timings.SEQ_MISC3);
+            mc_seq.put("MC_SEQ_MISC8", r9_timings.SEQ_MISC8);
+        }
+        else
+        {
+            mc_seq.put("MC_SEQ_MISC1", rx_timings.SEQ_MISC1);
+            mc_seq.put("MC_SEQ_MISC3", rx_timings.SEQ_MISC3);
+            mc_seq.put("MC_SEQ_MISC8", rx_timings.SEQ_MISC8);
+        }
 
         for(Map.Entry<String, Long> e : mc_seq.entrySet())
         {
@@ -483,6 +493,12 @@ public class TimingsDecoderGUI extends JFrame
                 valid = false;
             if(!update_timings(rx_timings.ARB_DRAM_TIMING2, rx_timings.ARB_DRAM_TIMING2.getClass().getFields()))
                 valid = false;
+            // if(!validate_mc_seq("MC_SEQ_MISC1"))
+            //     valid = false;
+            // if(!validate_mc_seq("MC_SEQ_MISC3"))
+            //     valid = false;
+            // if(!validate_mc_seq("MC_SEQ_MISC8"))
+            //     valid = false;
         }
 
         if(valid)
