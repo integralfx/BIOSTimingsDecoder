@@ -49,7 +49,7 @@ public class TimingsDecoderGUI extends JFrame
 
     public TimingsDecoderGUI()
     {
-        super("Timings Decoder v1.1.1");
+        super("Timings Decoder v1.1.2");
 
         main_panel.setLayout(new GridBagLayout());
 
@@ -89,7 +89,7 @@ public class TimingsDecoderGUI extends JFrame
         tp[0] = new TimingsPanelInfo("ARB_DRAM_TIMING", TimingsDecoder.ARB_DRAM_TIMING_FORMAT.names, 80);
         tp[1] = new TimingsPanelInfo("ARB_DRAM_TIMING2", TimingsDecoder.ARB_DRAM_TIMING2_FORMAT.names, 80);
         add_timings_panel(tp, 4, 1);
-        //add_seq_misc_timings_panel(5, 0, 100);
+        add_mc_seq_panel(5, 0);
 
         pack();
 		setResizable(false);
@@ -317,12 +317,8 @@ public class TimingsDecoderGUI extends JFrame
         main_panel.add(panel_parent, gbc);
     }
 
-    private void add_seq_misc_timings_panel(int r, int c, int label_width)
+    private void add_mc_seq_panel(int row, int col)
     {
-        final String[] mc_seq = {
-            "MC_SEQ_MISC1", "MC_SEQ_MISC3", "MC_SEQ_MISC8"
-        };
-
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
 
@@ -335,24 +331,62 @@ public class TimingsDecoderGUI extends JFrame
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         panel.add(panel_title, gbc);
 
-        // add each timing
-        for(int i = 0; i < mc_seq.length; i++)
-        {
-            JPanel panel_row = new JPanel(new FlowLayout());
+        // WL
+        JPanel panel_row = new JPanel(new FlowLayout());
+        JLabel lbl_row = new JLabel("WL:");
+        lbl_row.setPreferredSize(new Dimension(30, lbl_row.getPreferredSize().height));
+        Font normal = lbl_row.getFont().deriveFont(Font.PLAIN);
+        lbl_row.setFont(normal);
+        panel_row.add(lbl_row);
+        JTextField txt_row = new JTextField(2);
+        txt_row.getDocument().addDocumentListener(timings_doc_listener);
+        panel_row.add(txt_row);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.gridy = 1;
+        panel.add(panel_row, gbc);
+        timings_textfields.put("WL", txt_row);
 
-            JLabel lbl_row = new JLabel(mc_seq[i] + ":");
-            lbl_row.setPreferredSize(new Dimension(label_width, lbl_row.getPreferredSize().height));
-            panel_row.add(lbl_row);
-            
-            JTextField txt_row = new JTextField(8);
-            txt_row.getDocument().addDocumentListener(timings_doc_listener);
-            panel_row.add(txt_row);
+        // CL
+        panel_row = new JPanel(new FlowLayout());
+        lbl_row = new JLabel("CL:");
+        lbl_row.setPreferredSize(new Dimension(30, lbl_row.getPreferredSize().height));
+        lbl_row.setFont(normal);
+        panel_row.add(lbl_row);
+        txt_row = new JTextField(2);
+        txt_row.getDocument().addDocumentListener(timings_doc_listener);
+        panel_row.add(txt_row);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1; gbc.gridy = 1;
+        panel.add(panel_row, gbc);
+        timings_textfields.put("CL", txt_row);
 
-            gbc = new GridBagConstraints();
-            gbc.gridx = i / 5; gbc.gridy = (i % 5) + 1; // + 1 as title takes up a row
-            panel.add(panel_row, gbc);
-            timings_textfields.put(mc_seq[i], txt_row);
-        }
+        // WR
+        panel_row = new JPanel(new FlowLayout());
+        lbl_row = new JLabel("WR:");
+        lbl_row.setPreferredSize(new Dimension(30, lbl_row.getPreferredSize().height));
+        lbl_row.setFont(normal);
+        panel_row.add(lbl_row);
+        txt_row = new JTextField(2);
+        txt_row.getDocument().addDocumentListener(timings_doc_listener);
+        panel_row.add(txt_row);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2; gbc.gridy = 1;
+        panel.add(panel_row, gbc);
+        timings_textfields.put("WR", txt_row);
+
+        // TRAS
+        panel_row = new JPanel(new FlowLayout());
+        lbl_row = new JLabel("TRAS:");
+        lbl_row.setPreferredSize(new Dimension(40, lbl_row.getPreferredSize().height));
+        lbl_row.setFont(normal);
+        panel_row.add(lbl_row);
+        txt_row = new JTextField(2);
+        txt_row.getDocument().addDocumentListener(timings_doc_listener);
+        panel_row.add(txt_row);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3; gbc.gridy = 1;
+        panel.add(panel_row, gbc);
+        timings_textfields.put("TRAS", txt_row);
 
         panel.setBorder(new LineBorder(Color.GRAY));
 
@@ -361,7 +395,7 @@ public class TimingsDecoderGUI extends JFrame
         panel_title.setPreferredSize(new Dimension(width, height));
 
         gbc = new GridBagConstraints();
-        gbc.gridx = c; gbc.gridy = r;
+        gbc.gridx = col; gbc.gridy = row;
         gbc.insets = padding;
         main_panel.add(panel, gbc);
     }
@@ -383,7 +417,7 @@ public class TimingsDecoderGUI extends JFrame
             update_timings_text(r9_timings.SEQ_MISC_TIMING2.get_timings());
             update_timings_text(r9_timings.ARB_DRAM_TIMING.get_timings());
             update_timings_text(r9_timings.ARB_DRAM_TIMING2.get_timings());
-            //update_seq_misc_timings_text();
+            update_seq_misc_timings_text();
         }
         else
         {
@@ -396,7 +430,7 @@ public class TimingsDecoderGUI extends JFrame
             update_timings_text(rx_timings.SEQ_MISC_TIMING2.get_timings());
             update_timings_text(rx_timings.ARB_DRAM_TIMING.get_timings());
             update_timings_text(rx_timings.ARB_DRAM_TIMING2.get_timings());
-            //update_seq_misc_timings_text();
+            update_seq_misc_timings_text();
         }
     }
 
@@ -417,24 +451,40 @@ public class TimingsDecoderGUI extends JFrame
 
     private void update_seq_misc_timings_text()
     {
-        LinkedHashMap<String, Long> mc_seq = new LinkedHashMap<>();
+        LinkedHashMap<String, Integer> mc_seq = new LinkedHashMap<>();
         if(is_r9_timings)
         {
-            mc_seq.put("MC_SEQ_MISC1", r9_timings.SEQ_MISC1);
-            mc_seq.put("MC_SEQ_MISC3", r9_timings.SEQ_MISC3);
-            mc_seq.put("MC_SEQ_MISC8", r9_timings.SEQ_MISC8);
+            mc_seq.put("WL", Byte.toUnsignedInt(r9_timings.SEQ_MISC1.WL));
+
+            int cl = 5 + ((Byte.toUnsignedInt(r9_timings.SEQ_MISC1.CL) & 0xF) | 
+                     (Byte.toUnsignedInt(r9_timings.SEQ_MISC8.CLEHF) << 4));
+            mc_seq.put("CL", cl);
+
+            int wr = 4 + ((r9_timings.SEQ_MISC1.WR & 0xF) |
+                     (Byte.toUnsignedInt(r9_timings.SEQ_MISC8.WREHF) << 4));
+            mc_seq.put("WR", wr);
+
+            mc_seq.put("TRAS", Byte.toUnsignedInt(r9_timings.SEQ_MISC3.TRAS));
         }
         else
         {
-            mc_seq.put("MC_SEQ_MISC1", rx_timings.SEQ_MISC1);
-            mc_seq.put("MC_SEQ_MISC3", rx_timings.SEQ_MISC3);
-            mc_seq.put("MC_SEQ_MISC8", rx_timings.SEQ_MISC8);
+            mc_seq.put("WL", Byte.toUnsignedInt(rx_timings.SEQ_MISC1.WL));
+            
+            int cl = 5 + ((Byte.toUnsignedInt(rx_timings.SEQ_MISC1.CL) & 0xF) | 
+                     (Byte.toUnsignedInt(rx_timings.SEQ_MISC8.CLEHF) << 4));
+            mc_seq.put("CL", cl);
+
+            int wr = 4 + ((rx_timings.SEQ_MISC1.WR & 0xF) |
+                     (Byte.toUnsignedInt(rx_timings.SEQ_MISC8.WREHF) << 4));
+            mc_seq.put("WR", wr);
+
+            mc_seq.put("TRAS", Byte.toUnsignedInt(rx_timings.SEQ_MISC3.TRAS));
         }
 
-        for(Map.Entry<String, Long> e : mc_seq.entrySet())
+        for(Map.Entry<String, Integer> e : mc_seq.entrySet())
         {
             JTextField txt = timings_textfields.get(e.getKey());
-            txt.setText(String.format("0x%08X", e.getValue().intValue()));
+            txt.setText(String.format("%d", e.getValue()));
         }
     }
 
@@ -466,12 +516,8 @@ public class TimingsDecoderGUI extends JFrame
                 valid = false;
             if(!update_timings(r9_timings.ARB_DRAM_TIMING2, r9_timings.ARB_DRAM_TIMING2.getClass().getFields()))
                 valid = false;
-            // if(!validate_mc_seq("MC_SEQ_MISC1"))
-            //     valid = false;
-            // if(!validate_mc_seq("MC_SEQ_MISC3"))
-            //     valid = false;
-            // if(!validate_mc_seq("MC_SEQ_MISC8"))
-            //     valid = false;
+            if(!update_mc_seq_timings())
+                valid = false;
         }
         else
         {
@@ -493,12 +539,8 @@ public class TimingsDecoderGUI extends JFrame
                 valid = false;
             if(!update_timings(rx_timings.ARB_DRAM_TIMING2, rx_timings.ARB_DRAM_TIMING2.getClass().getFields()))
                 valid = false;
-            // if(!validate_mc_seq("MC_SEQ_MISC1"))
-            //     valid = false;
-            // if(!validate_mc_seq("MC_SEQ_MISC3"))
-            //     valid = false;
-            // if(!validate_mc_seq("MC_SEQ_MISC8"))
-            //     valid = false;
+            if(!update_mc_seq_timings())
+                valid = false;
         }
 
         if(valid)
@@ -512,30 +554,112 @@ public class TimingsDecoderGUI extends JFrame
         }
     }
 
-    /*
-     * validates MC_SEQ_MISCN timings
-     * sets the JTextField to invalid_color
-     * and returns false, if input is invalid
-     * otherwise, returns true
-     */
-    private boolean validate_mc_seq(String name)
+    private boolean update_mc_seq_timings()
     {
-        JTextField txt = timings_textfields.get(name);
-        String str = txt.getText();
-        boolean valid = true;
+        String[] names = { "WL", "CL", "WR", "TRAS" };
 
-        if(!str.isEmpty()) 
+        boolean valid = true;
+        for (String name : names)
         {
-            if(!str.matches("0x[0-9A-Fa-f]{8}"))
-            {
-                txt.setBackground(invalid_color);
-                valid = false;
+            JTextField txt = timings_textfields.get(name);
+            if (txt == null) return false;
+            String str = txt.getText();
+
+            try {
+                int value = Integer.parseInt(str), min = 0, max;
+    
+                if (is_r9_timings)
+                {
+                    if (name.equals("WL"))
+                    {
+                        max = r9_timings.SEQ_MISC1.get_sizes().get("WL");
+                        max = (int)Math.round(Math.pow(2, max)) - 1;
+
+                        if (value < min || value > max) 
+                            valid = false;
+                        else r9_timings.SEQ_MISC1.WL = (byte)value;
+                    }
+                    else if (name.equals("CL"))
+                    {
+                        min = 6;
+                        max = r9_timings.SEQ_MISC1.get_sizes().get("CL") +
+                              r9_timings.SEQ_MISC8.get_sizes().get("CLEHF");
+                        max = 5 + (int)Math.round(Math.pow(2, max)) - 1;
+    
+                        if (value < min || value > max) 
+                            valid = false;
+                        else r9_timings.set_mc_cl(value);
+                    }
+                    else if (name.equals("WR"))
+                    {
+                        min = 5;
+                        max = r9_timings.SEQ_MISC1.get_sizes().get("WR") +
+                              r9_timings.SEQ_MISC8.get_sizes().get("WREHF");
+                        max = 4 + (int)Math.round(Math.pow(2, max)) - 1;
+    
+                        if (value < min || value > max) 
+                            valid = false;
+                        else r9_timings.set_mc_wr(value);
+                    }
+                    else
+                    {
+                        max = r9_timings.SEQ_MISC3.get_sizes().get("TRAS");
+                        max = (int)Math.round(Math.pow(2, max)) - 1;
+    
+                        if (value < min || value > max) 
+                            valid = false;
+                        else r9_timings.SEQ_MISC3.TRAS = (byte)value;
+                    }
+                }
+                else 
+                {
+                    if (name.equals("WL"))
+                    {
+                        max = r9_timings.SEQ_MISC1.get_sizes().get("WL");
+                        max = (int)Math.round(Math.pow(2, max)) - 1;
+
+                        if (value < min || value > max) 
+                            valid = false;
+                        else r9_timings.SEQ_MISC1.WL = (byte)value;
+                    }
+                    else if (name.equals("CL"))
+                    {
+                        min = 6;
+                        max = rx_timings.SEQ_MISC1.get_sizes().get("CL") +
+                              rx_timings.SEQ_MISC8.get_sizes().get("CLEHF");
+                        max = 5 + (int)Math.round(Math.pow(2, max)) - 1;
+    
+                        if (value < min || value > max) 
+                            valid = false;
+                        else rx_timings.set_mc_cl(value);
+                    }
+                    else if (name.equals("WR"))
+                    {
+                        min = 5;
+                        max = rx_timings.SEQ_MISC1.get_sizes().get("WR") +
+                              rx_timings.SEQ_MISC8.get_sizes().get("WREHF");
+                        max = 5 + (int)Math.round(Math.pow(2, max)) - 1;
+    
+                        if (value < min || value > max) 
+                            valid = false;
+                        else rx_timings.set_mc_wr(value);
+                    }
+                    else
+                    {
+                        max = rx_timings.SEQ_MISC3.get_sizes().get("TRAS");
+                        max = (int)Math.round(Math.pow(2, max)) - 1;
+    
+                        if (value < min || value > max) 
+                            valid = false;
+                        else rx_timings.SEQ_MISC3.TRAS = (byte)value;
+                    }
+                }
+    
+                if (!valid) txt.setBackground(invalid_color);
+                else txt.setBackground(Color.WHITE);
             }
-            else
-            {
-                txt.setBackground(Color.WHITE);
-                // remove leading 0x
-                r9_timings.SEQ_MISC1 = Long.valueOf(str.substring(2), 16);
+            catch(NumberFormatException e) {
+                return false;
             }
         }
 
