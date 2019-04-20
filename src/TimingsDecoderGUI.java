@@ -49,7 +49,7 @@ public class TimingsDecoderGUI extends JFrame
 
     public TimingsDecoderGUI()
     {
-        super("Timings Decoder v1.1.2");
+        super("Timings Decoder v1.1.3");
 
         main_panel.setLayout(new GridBagLayout());
 
@@ -558,9 +558,9 @@ public class TimingsDecoderGUI extends JFrame
     {
         String[] names = { "WL", "CL", "WR", "TRAS" };
 
-        boolean valid = true;
         for (String name : names)
         {
+            boolean valid = true;
             JTextField txt = timings_textfields.get(name);
             if (txt == null) return false;
             String str = txt.getText();
@@ -615,12 +615,12 @@ public class TimingsDecoderGUI extends JFrame
                 {
                     if (name.equals("WL"))
                     {
-                        max = r9_timings.SEQ_MISC1.get_sizes().get("WL");
+                        max = rx_timings.SEQ_MISC1.get_sizes().get("WL");
                         max = (int)Math.round(Math.pow(2, max)) - 1;
 
                         if (value < min || value > max) 
                             valid = false;
-                        else r9_timings.SEQ_MISC1.WL = (byte)value;
+                        else rx_timings.SEQ_MISC1.WL = (byte)value;
                     }
                     else if (name.equals("CL"))
                     {
@@ -655,7 +655,11 @@ public class TimingsDecoderGUI extends JFrame
                     }
                 }
     
-                if (!valid) txt.setBackground(invalid_color);
+                if (!valid)
+                {
+                    txt.setBackground(invalid_color);
+                    return false;
+                }
                 else txt.setBackground(Color.WHITE);
             }
             catch(NumberFormatException e) {
@@ -663,7 +667,7 @@ public class TimingsDecoderGUI extends JFrame
             }
         }
 
-        return valid;
+        return true;
     }
 
     /*
