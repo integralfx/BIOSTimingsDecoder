@@ -1,18 +1,11 @@
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class TimingsDecoder
 {
-	public static void main(String[] args) 
-	{
-		String s = "777000000000000022339D00CE515A3D9055111230CB440900400600740114206A8900A002003120100F292F94273116";
-		VBIOS_STRAP_RX strap = decode_rx_timings(s);
-		int CLmrs = (int)((strap.SEQ_MISC1.CL & 0xF) | (strap.SEQ_MISC8.CLEHF << 4)) + 5,
-			WR = (int)((strap.SEQ_MISC1.WR & 0xF) | (strap.SEQ_MISC8.WREHF << 4)) + 4;
-		System.out.println("CLmrs = " + CLmrs + "\tWR = " + WR);
-	}
-
 	public static VBIOS_STRAP_R9 decode_r9_timings(String timings)
 	{
 		return new VBIOS_STRAP_R9(hex_string_to_bytes(timings));
@@ -177,7 +170,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -264,7 +257,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -351,7 +344,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -428,7 +421,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -509,7 +502,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -577,7 +570,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -640,7 +633,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -723,7 +716,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -856,7 +849,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -995,7 +988,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -1139,7 +1132,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -1218,7 +1211,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -1276,7 +1269,7 @@ public class TimingsDecoder
 			return hex.substring(6, 8) + hex.substring(4, 6) + hex.substring(2, 4) + hex.substring(0, 2);
 		}
 	
-		public LinkedHashMap<String, Integer> get_sizes()
+		public static LinkedHashMap<String, Integer> get_sizes()
 		{
 			LinkedHashMap<String, Integer> sizes = new LinkedHashMap<>();
 	
@@ -1375,6 +1368,29 @@ public class TimingsDecoder
 			// 5th bit goes into WREHF
 			SEQ_MISC8.WREHF = (byte)((wr >> 4) & 0x1);
 		}
+
+		public static LinkedHashMap<String, Integer> get_sizes()
+		{
+			TreeMap<String, Integer> tm = new TreeMap<>();
+			tm.putAll(SEQ_WR_CTL_D1_FORMAT.get_sizes());
+			tm.putAll(SEQ_WR_CTL_2_FORMAT.get_sizes());
+
+			tm.putAll(SEQ_PMG_TIMING_FORMAT.get_sizes());
+			tm.putAll(SEQ_RAS_TIMING_FORMAT.get_sizes());
+			tm.putAll(SEQ_CAS_TIMING_FORMAT.get_sizes());
+
+			tm.putAll(SEQ_MISC_TIMING_FORMAT_R9.get_sizes());
+			tm.putAll(SEQ_MISC_TIMING2_FORMAT.get_sizes());
+
+			tm.putAll(SEQ_MISC1_FORMAT.get_sizes());
+			tm.putAll(SEQ_MISC3_FORMAT.get_sizes());
+			tm.putAll(SEQ_MISC8_FORMAT.get_sizes());
+
+			tm.putAll(ARB_DRAM_TIMING_FORMAT.get_sizes());
+			tm.putAll(ARB_DRAM_TIMING2_FORMAT.get_sizes());
+
+			return new LinkedHashMap<>(tm);
+		}
 	}
 
 	static class VBIOS_STRAP_RX
@@ -1457,6 +1473,29 @@ public class TimingsDecoder
 			SEQ_MISC1.WR = (byte)(wr & 0xF);
 			// 5th bit goes into WREHF
 			SEQ_MISC8.WREHF = (byte)((wr >> 4) & 0x1);
+		}
+
+		public static LinkedHashMap<String, Integer> get_sizes()
+		{
+			TreeMap<String, Integer> tm = new TreeMap<>();
+			tm.putAll(SEQ_WR_CTL_D1_FORMAT.get_sizes());
+			tm.putAll(SEQ_WR_CTL_2_FORMAT.get_sizes());
+
+			tm.putAll(SEQ_PMG_TIMING_FORMAT.get_sizes());
+			tm.putAll(SEQ_RAS_TIMING_FORMAT.get_sizes());
+			tm.putAll(SEQ_CAS_TIMING_FORMAT.get_sizes());
+
+			tm.putAll(SEQ_MISC_TIMING_FORMAT_RX.get_sizes());
+			tm.putAll(SEQ_MISC_TIMING2_FORMAT.get_sizes());
+
+			tm.putAll(SEQ_MISC1_FORMAT.get_sizes());
+			tm.putAll(SEQ_MISC3_FORMAT.get_sizes());
+			tm.putAll(SEQ_MISC8_FORMAT.get_sizes());
+
+			tm.putAll(ARB_DRAM_TIMING_FORMAT.get_sizes());
+			tm.putAll(ARB_DRAM_TIMING2_FORMAT.get_sizes());
+
+			return new LinkedHashMap<>(tm);
 		}
 	}
 }

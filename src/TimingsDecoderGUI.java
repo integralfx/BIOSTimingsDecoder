@@ -15,6 +15,7 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import javax.swing.BoxLayout;
@@ -49,7 +50,7 @@ public class TimingsDecoderGUI extends JFrame
 
     public TimingsDecoderGUI()
     {
-        super("Timings Decoder v1.1.3");
+        super("Timings Decoder v1.1.4");
 
         main_panel.setLayout(new GridBagLayout());
 
@@ -76,18 +77,18 @@ public class TimingsDecoderGUI extends JFrame
         };
 
         add_input_panel();
-        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_D1", TimingsDecoder.SEQ_WR_CTL_D1_FORMAT.names, 90), 2, 0);
-        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_2", TimingsDecoder.SEQ_WR_CTL_2_FORMAT.names, 100), 2, 1);
-        add_timings_panel(new TimingsPanelInfo("SEQ_PMG_TIMING", TimingsDecoder.SEQ_PMG_TIMING_FORMAT.names, 120), 3, 0);
+        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_D1", TimingsDecoder.SEQ_WR_CTL_D1_FORMAT.names, 90, 5), 2, 0);
+        add_timings_panel(new TimingsPanelInfo("SEQ_WR_CTL_2", TimingsDecoder.SEQ_WR_CTL_2_FORMAT.names, 100, 4), 2, 1);
+        add_timings_panel(new TimingsPanelInfo("SEQ_PMG_TIMING", TimingsDecoder.SEQ_PMG_TIMING_FORMAT.names, 120, 4), 3, 0);
         TimingsPanelInfo[] tp = new TimingsPanelInfo[2];
-        tp[0] = new TimingsPanelInfo("SEQ_RAS_TIMING", TimingsDecoder.SEQ_RAS_TIMING_FORMAT.names, 70);
-        tp[1] = new TimingsPanelInfo("SEQ_CAS_TIMING", TimingsDecoder.SEQ_CAS_TIMING_FORMAT.names, 50);
+        tp[0] = new TimingsPanelInfo("SEQ_RAS_TIMING", TimingsDecoder.SEQ_RAS_TIMING_FORMAT.names, 70, 5);
+        tp[1] = new TimingsPanelInfo("SEQ_CAS_TIMING", TimingsDecoder.SEQ_CAS_TIMING_FORMAT.names, 50, 5);
         add_timings_panel(tp, 3, 1);
-        tp[0] = new TimingsPanelInfo("SEQ_MISC_TIMING", TimingsDecoder.SEQ_MISC_TIMING_FORMAT_R9.names, 70);
-        tp[1] = new TimingsPanelInfo("SEQ_MISC_TIMING2", TimingsDecoder.SEQ_MISC_TIMING2_FORMAT.names, 70);
+        tp[0] = new TimingsPanelInfo("SEQ_MISC_TIMING", TimingsDecoder.SEQ_MISC_TIMING_FORMAT_R9.names, 70, 5);
+        tp[1] = new TimingsPanelInfo("SEQ_MISC_TIMING2", TimingsDecoder.SEQ_MISC_TIMING2_FORMAT.names, 70, 4);
         add_timings_panel(tp, 4, 0);
-        tp[0] = new TimingsPanelInfo("ARB_DRAM_TIMING", TimingsDecoder.ARB_DRAM_TIMING_FORMAT.names, 80);
-        tp[1] = new TimingsPanelInfo("ARB_DRAM_TIMING2", TimingsDecoder.ARB_DRAM_TIMING2_FORMAT.names, 80);
+        tp[0] = new TimingsPanelInfo("ARB_DRAM_TIMING", TimingsDecoder.ARB_DRAM_TIMING_FORMAT.names, 80, 5);
+        tp[1] = new TimingsPanelInfo("ARB_DRAM_TIMING2", TimingsDecoder.ARB_DRAM_TIMING2_FORMAT.names, 80, 5);
         add_timings_panel(tp, 4, 1);
         add_mc_seq_panel(5, 0);
 
@@ -147,7 +148,7 @@ public class TimingsDecoderGUI extends JFrame
                         rx_timings = TimingsDecoder.decode_rx_timings(input);
 
                     should_update = false;
-                    update_all_timings_text();
+                    update_timings_text();
                     should_update = true;
                 }
             }
@@ -231,7 +232,8 @@ public class TimingsDecoderGUI extends JFrame
             panel_row.add(txt_row);
 
             gbc = new GridBagConstraints();
-            gbc.gridx = count / 5; gbc.gridy = (count % 5) + 1; // + 1 as title takes up a row
+            gbc.gridx = count / tp.num_rows; 
+            gbc.gridy = (count % tp.num_rows) + 1; // + 1 as title takes up a row
             panel.add(panel_row, gbc);
             timings_textfields.put(timing, txt_row);
             count++;
@@ -296,7 +298,8 @@ public class TimingsDecoderGUI extends JFrame
                 panel_row.add(txt_row);
 
                 gbc = new GridBagConstraints();
-                gbc.gridx = count / 5; gbc.gridy = (count % 5) + 1; // + 1 as title takes up a row
+                gbc.gridx = count / tp.num_rows; 
+                gbc.gridy = (count % tp.num_rows) + 1; // + 1 as title takes up a row
                 panel.add(panel_row, gbc);
                 timings_textfields.put(timing, txt_row);
                 count++;
@@ -331,62 +334,28 @@ public class TimingsDecoderGUI extends JFrame
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         panel.add(panel_title, gbc);
 
-        // WL
-        JPanel panel_row = new JPanel(new FlowLayout());
-        JLabel lbl_row = new JLabel("WL:");
-        lbl_row.setPreferredSize(new Dimension(30, lbl_row.getPreferredSize().height));
-        Font normal = lbl_row.getFont().deriveFont(Font.PLAIN);
-        lbl_row.setFont(normal);
-        panel_row.add(lbl_row);
-        JTextField txt_row = new JTextField(2);
-        txt_row.getDocument().addDocumentListener(timings_doc_listener);
-        panel_row.add(txt_row);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(panel_row, gbc);
-        timings_textfields.put("WL", txt_row);
+        String[] labels = { "WL", "CL", "WR", "TRAS", "CRCRL", "CRCWL" };
+        int[] label_widths = { 30, 30, 30, 40, 50, 50 };
 
-        // CL
-        panel_row = new JPanel(new FlowLayout());
-        lbl_row = new JLabel("CL:");
-        lbl_row.setPreferredSize(new Dimension(30, lbl_row.getPreferredSize().height));
-        lbl_row.setFont(normal);
-        panel_row.add(lbl_row);
-        txt_row = new JTextField(2);
-        txt_row.getDocument().addDocumentListener(timings_doc_listener);
-        panel_row.add(txt_row);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1; gbc.gridy = 1;
-        panel.add(panel_row, gbc);
-        timings_textfields.put("CL", txt_row);
+        for (int i = 0; i < labels.length; i++)
+        {
+            JPanel panel_row = new JPanel(new FlowLayout());
 
-        // WR
-        panel_row = new JPanel(new FlowLayout());
-        lbl_row = new JLabel("WR:");
-        lbl_row.setPreferredSize(new Dimension(30, lbl_row.getPreferredSize().height));
-        lbl_row.setFont(normal);
-        panel_row.add(lbl_row);
-        txt_row = new JTextField(2);
-        txt_row.getDocument().addDocumentListener(timings_doc_listener);
-        panel_row.add(txt_row);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 2; gbc.gridy = 1;
-        panel.add(panel_row, gbc);
-        timings_textfields.put("WR", txt_row);
+            JLabel lbl_row = new JLabel(labels[i] + ":");
+            lbl_row.setPreferredSize(new Dimension(label_widths[i], lbl_row.getPreferredSize().height));
+            Font normal = lbl_row.getFont().deriveFont(Font.PLAIN);
+            lbl_row.setFont(normal);
+            panel_row.add(lbl_row);
 
-        // TRAS
-        panel_row = new JPanel(new FlowLayout());
-        lbl_row = new JLabel("TRAS:");
-        lbl_row.setPreferredSize(new Dimension(40, lbl_row.getPreferredSize().height));
-        lbl_row.setFont(normal);
-        panel_row.add(lbl_row);
-        txt_row = new JTextField(2);
-        txt_row.getDocument().addDocumentListener(timings_doc_listener);
-        panel_row.add(txt_row);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3; gbc.gridy = 1;
-        panel.add(panel_row, gbc);
-        timings_textfields.put("TRAS", txt_row);
+            JTextField txt_row = new JTextField(2);
+            txt_row.getDocument().addDocumentListener(timings_doc_listener);
+            timings_textfields.put(labels[i], txt_row);
+            panel_row.add(txt_row);
+
+            gbc = new GridBagConstraints();
+            gbc.gridx = i; gbc.gridy = 1;
+            panel.add(panel_row, gbc);
+        }
 
         panel.setBorder(new LineBorder(Color.GRAY));
 
@@ -396,6 +365,7 @@ public class TimingsDecoderGUI extends JFrame
 
         gbc = new GridBagConstraints();
         gbc.gridx = col; gbc.gridy = row;
+        gbc.gridwidth = 2;
         gbc.insets = padding;
         main_panel.add(panel, gbc);
     }
@@ -404,54 +374,41 @@ public class TimingsDecoderGUI extends JFrame
      * updates each of the timings as the user changes
      * the input hex string
      */
-    private void update_all_timings_text()
+    private void update_timings_text()
     {
-        if(is_r9_timings)
-        {
-            update_timings_text(r9_timings.SEQ_WR_CTL_D1.get_timings());
-            update_timings_text(r9_timings.SEQ_WR_CTL_2.get_timings());
-            update_timings_text(r9_timings.SEQ_PMG_TIMING.get_timings());
-            update_timings_text(r9_timings.SEQ_RAS_TIMING.get_timings());
-            update_timings_text(r9_timings.SEQ_CAS_TIMING.get_timings());
-            update_timings_text(r9_timings.SEQ_MISC_TIMING.get_timings());
-            update_timings_text(r9_timings.SEQ_MISC_TIMING2.get_timings());
-            update_timings_text(r9_timings.ARB_DRAM_TIMING.get_timings());
-            update_timings_text(r9_timings.ARB_DRAM_TIMING2.get_timings());
+        try {
+            Object timings = is_r9_timings ? r9_timings : rx_timings;
+            // for each timing group
+            for (Field f : timings.getClass().getFields()) 
+            {
+                if (f.getName().equals("size") || f.getName().equals("SEQ_MISC1") ||
+                    f.getName().equals("SEQ_MISC3") || f.getName().equals("SEQ_MISC8"))
+                    continue;
+
+                Method m = f.getType().getMethod("get_timings");
+                LinkedHashMap<String, Byte> t = (LinkedHashMap<String, Byte>)m.invoke(f.get(timings));
+                // for each timing
+                for(Map.Entry<String, Byte> e : t.entrySet())
+                {
+                    if(e.getKey().startsWith("Pad"))
+                        continue;
+        
+                    JTextField txt = timings_textfields.get(e.getKey());
+                    txt.setText(String.format("%d", Byte.toUnsignedInt(e.getValue())));
+                }
+            }
+
             update_seq_misc_timings_text();
         }
-        else
-        {
-            update_timings_text(rx_timings.SEQ_WR_CTL_D1.get_timings());
-            update_timings_text(rx_timings.SEQ_WR_CTL_2.get_timings());
-            update_timings_text(rx_timings.SEQ_PMG_TIMING.get_timings());
-            update_timings_text(rx_timings.SEQ_RAS_TIMING.get_timings());
-            update_timings_text(rx_timings.SEQ_CAS_TIMING.get_timings());
-            update_timings_text(rx_timings.SEQ_MISC_TIMING.get_timings());
-            update_timings_text(rx_timings.SEQ_MISC_TIMING2.get_timings());
-            update_timings_text(rx_timings.ARB_DRAM_TIMING.get_timings());
-            update_timings_text(rx_timings.ARB_DRAM_TIMING2.get_timings());
-            update_seq_misc_timings_text();
-        }
-    }
-
-    /*
-     * updates the JTextField associated with the timing in timings
-     */
-    private void update_timings_text(LinkedHashMap<String, Byte> timings)
-    {
-        for(Map.Entry<String, Byte> e : timings.entrySet())
-        {
-            if(e.getKey().startsWith("Pad"))
-                continue;
-
-            JTextField txt = timings_textfields.get(e.getKey());
-            txt.setText(String.format("%d", Byte.toUnsignedInt(e.getValue())));
+        catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
         }
     }
 
     private void update_seq_misc_timings_text()
     {
         LinkedHashMap<String, Integer> mc_seq = new LinkedHashMap<>();
+
         if(is_r9_timings)
         {
             mc_seq.put("WL", Byte.toUnsignedInt(r9_timings.SEQ_MISC1.WL));
@@ -465,6 +422,9 @@ public class TimingsDecoderGUI extends JFrame
             mc_seq.put("WR", wr);
 
             mc_seq.put("TRAS", Byte.toUnsignedInt(r9_timings.SEQ_MISC3.TRAS));
+
+            mc_seq.put("CRCRL", Byte.toUnsignedInt(r9_timings.SEQ_MISC3.CRCRL));
+            mc_seq.put("CRCWL", Byte.toUnsignedInt(r9_timings.SEQ_MISC3.CRCWL));
         }
         else
         {
@@ -474,11 +434,14 @@ public class TimingsDecoderGUI extends JFrame
                      (Byte.toUnsignedInt(rx_timings.SEQ_MISC8.CLEHF) << 4));
             mc_seq.put("CL", cl);
 
-            int wr = 4 + ((rx_timings.SEQ_MISC1.WR & 0xF) |
+            int wr = 4 + ((Byte.toUnsignedInt(rx_timings.SEQ_MISC1.WR) & 0xF) |
                      (Byte.toUnsignedInt(rx_timings.SEQ_MISC8.WREHF) << 4));
             mc_seq.put("WR", wr);
 
             mc_seq.put("TRAS", Byte.toUnsignedInt(rx_timings.SEQ_MISC3.TRAS));
+
+            mc_seq.put("CRCRL", Byte.toUnsignedInt(rx_timings.SEQ_MISC3.CRCRL));
+            mc_seq.put("CRCWL", Byte.toUnsignedInt(rx_timings.SEQ_MISC3.CRCWL));
         }
 
         for(Map.Entry<String, Integer> e : mc_seq.entrySet())
@@ -496,52 +459,24 @@ public class TimingsDecoderGUI extends JFrame
     {
         boolean valid = true;
 
-        if(is_r9_timings)
+        Object timings = is_r9_timings ? r9_timings : rx_timings;
+        for (Field f : timings.getClass().getFields())
         {
-            if(!update_timings(r9_timings.SEQ_WR_CTL_D1, r9_timings.SEQ_WR_CTL_D1.getClass().getFields()))
-                valid = false;
-            if(!update_timings(r9_timings.SEQ_WR_CTL_2, r9_timings.SEQ_WR_CTL_2.getClass().getFields()))
-                valid = false;
-            if(!update_timings(r9_timings.SEQ_PMG_TIMING, r9_timings.SEQ_PMG_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(r9_timings.SEQ_RAS_TIMING, r9_timings.SEQ_RAS_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(r9_timings.SEQ_CAS_TIMING, r9_timings.SEQ_CAS_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(r9_timings.SEQ_MISC_TIMING, r9_timings.SEQ_MISC_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(r9_timings.SEQ_MISC_TIMING2, r9_timings.SEQ_MISC_TIMING2.getClass().getFields()))
-                valid = false;
-            if(!update_timings(r9_timings.ARB_DRAM_TIMING, r9_timings.ARB_DRAM_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(r9_timings.ARB_DRAM_TIMING2, r9_timings.ARB_DRAM_TIMING2.getClass().getFields()))
-                valid = false;
-            if(!update_mc_seq_timings())
-                valid = false;
+            if (f.getName().equals("size") || f.getName().equals("SEQ_MISC1") ||
+                f.getName().equals("SEQ_MISC3") || f.getName().equals("SEQ_MISC8"))
+                continue;
+
+            try {
+                if (!update_timings(f.get(timings)))
+                    valid = false;
+            }
+            catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
         }
-        else
-        {
-            if(!update_timings(rx_timings.SEQ_WR_CTL_D1, rx_timings.SEQ_WR_CTL_D1.getClass().getFields()))
-                valid = false;
-            if(!update_timings(rx_timings.SEQ_WR_CTL_2, rx_timings.SEQ_WR_CTL_2.getClass().getFields()))
-                valid = false;
-            if(!update_timings(rx_timings.SEQ_PMG_TIMING, rx_timings.SEQ_PMG_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(rx_timings.SEQ_RAS_TIMING, rx_timings.SEQ_RAS_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(rx_timings.SEQ_CAS_TIMING, rx_timings.SEQ_CAS_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(rx_timings.SEQ_MISC_TIMING, rx_timings.SEQ_MISC_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(rx_timings.SEQ_MISC_TIMING2, rx_timings.SEQ_MISC_TIMING2.getClass().getFields()))
-                valid = false;
-            if(!update_timings(rx_timings.ARB_DRAM_TIMING, rx_timings.ARB_DRAM_TIMING.getClass().getFields()))
-                valid = false;
-            if(!update_timings(rx_timings.ARB_DRAM_TIMING2, rx_timings.ARB_DRAM_TIMING2.getClass().getFields()))
-                valid = false;
-            if(!update_mc_seq_timings())
-                valid = false;
-        }
+
+        if(!update_mc_seq_timings())
+            valid = false;
 
         if(valid)
         {   
@@ -554,138 +489,21 @@ public class TimingsDecoderGUI extends JFrame
         }
     }
 
-    private boolean update_mc_seq_timings()
-    {
-        String[] names = { "WL", "CL", "WR", "TRAS" };
-
-        for (String name : names)
-        {
-            boolean valid = true;
-            JTextField txt = timings_textfields.get(name);
-            if (txt == null) return false;
-            String str = txt.getText();
-
-            try {
-                int value = Integer.parseInt(str), min = 0, max;
-    
-                if (is_r9_timings)
-                {
-                    if (name.equals("WL"))
-                    {
-                        max = r9_timings.SEQ_MISC1.get_sizes().get("WL");
-                        max = (int)Math.round(Math.pow(2, max)) - 1;
-
-                        if (value < min || value > max) 
-                            valid = false;
-                        else r9_timings.SEQ_MISC1.WL = (byte)value;
-                    }
-                    else if (name.equals("CL"))
-                    {
-                        min = 6;
-                        max = r9_timings.SEQ_MISC1.get_sizes().get("CL") +
-                              r9_timings.SEQ_MISC8.get_sizes().get("CLEHF");
-                        max = 5 + (int)Math.round(Math.pow(2, max)) - 1;
-    
-                        if (value < min || value > max) 
-                            valid = false;
-                        else r9_timings.set_mc_cl(value);
-                    }
-                    else if (name.equals("WR"))
-                    {
-                        min = 5;
-                        max = r9_timings.SEQ_MISC1.get_sizes().get("WR") +
-                              r9_timings.SEQ_MISC8.get_sizes().get("WREHF");
-                        max = 4 + (int)Math.round(Math.pow(2, max)) - 1;
-    
-                        if (value < min || value > max) 
-                            valid = false;
-                        else r9_timings.set_mc_wr(value);
-                    }
-                    else
-                    {
-                        max = r9_timings.SEQ_MISC3.get_sizes().get("TRAS");
-                        max = (int)Math.round(Math.pow(2, max)) - 1;
-    
-                        if (value < min || value > max) 
-                            valid = false;
-                        else r9_timings.SEQ_MISC3.TRAS = (byte)value;
-                    }
-                }
-                else 
-                {
-                    if (name.equals("WL"))
-                    {
-                        max = rx_timings.SEQ_MISC1.get_sizes().get("WL");
-                        max = (int)Math.round(Math.pow(2, max)) - 1;
-
-                        if (value < min || value > max) 
-                            valid = false;
-                        else rx_timings.SEQ_MISC1.WL = (byte)value;
-                    }
-                    else if (name.equals("CL"))
-                    {
-                        min = 6;
-                        max = rx_timings.SEQ_MISC1.get_sizes().get("CL") +
-                              rx_timings.SEQ_MISC8.get_sizes().get("CLEHF");
-                        max = 5 + (int)Math.round(Math.pow(2, max)) - 1;
-    
-                        if (value < min || value > max) 
-                            valid = false;
-                        else rx_timings.set_mc_cl(value);
-                    }
-                    else if (name.equals("WR"))
-                    {
-                        min = 5;
-                        max = rx_timings.SEQ_MISC1.get_sizes().get("WR") +
-                              rx_timings.SEQ_MISC8.get_sizes().get("WREHF");
-                        max = 5 + (int)Math.round(Math.pow(2, max)) - 1;
-    
-                        if (value < min || value > max) 
-                            valid = false;
-                        else rx_timings.set_mc_wr(value);
-                    }
-                    else
-                    {
-                        max = rx_timings.SEQ_MISC3.get_sizes().get("TRAS");
-                        max = (int)Math.round(Math.pow(2, max)) - 1;
-    
-                        if (value < min || value > max) 
-                            valid = false;
-                        else rx_timings.SEQ_MISC3.TRAS = (byte)value;
-                    }
-                }
-    
-                if (!valid)
-                {
-                    txt.setBackground(invalid_color);
-                    return false;
-                }
-                else txt.setBackground(Color.WHITE);
-            }
-            catch(NumberFormatException e) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     /*
-     * updates obj's fields with the values
-     * the user input
+     * updates obj's fields with the values the user input
      * sets the JTextField background to invalid_color
      * and returns false, if input is invalid
      * otherwise, returns true
      */
-    private boolean update_timings(Object obj, Field[] fields)
+    private boolean update_timings(Object obj)
     {
         try
         {
             Method get_sizes_method = obj.getClass().getMethod("get_sizes");
-            LinkedHashMap<String, Integer> sizes = (LinkedHashMap<String, Integer>)get_sizes_method.invoke(obj);
+            LinkedHashMap<String, Integer> sizes = (LinkedHashMap<String, Integer>)get_sizes_method.invoke(null);
 
             // loop over timings member variables
-            for(Field f : fields)
+            for(Field f : obj.getClass().getFields())
             {
                 if(f.getName().startsWith("Pad") || f.getName() == "names") 
                     continue;
@@ -726,17 +544,151 @@ public class TimingsDecoderGUI extends JFrame
         }
     }
 
+    private boolean update_mc_seq_timings()
+    {
+        String[] names = { "WL", "CL", "WR", "TRAS", "CRCRL", "CRCWL" };
+
+        for (String name : names)
+        {
+            boolean valid = true;
+            JTextField txt = timings_textfields.get(name);
+            if (txt == null) return false;
+            String str = txt.getText();
+
+            try {
+                int value = Integer.parseInt(str), min = 0, max = 0;
+                Object timings;
+                LinkedHashMap<String, Integer> sizes;
+
+                if (is_r9_timings)
+                {
+                    timings = r9_timings;
+                    sizes = TimingsDecoder.VBIOS_STRAP_R9.get_sizes();
+                }
+                else
+                {
+                    timings = rx_timings;
+                    sizes = TimingsDecoder.VBIOS_STRAP_RX.get_sizes();
+                }
+
+                if (name.equals("CL"))
+                {
+                    min = 6;
+                    max = sizes.get("CL") + sizes.get("CLEHF");
+                    max = 5 + (int)Math.round(Math.pow(2, max)) - 1;
+
+                    if (value < min || value > max)
+                        valid = false;
+                    else
+                    {
+                        Method m = timings.getClass().getMethod("set_mc_cl", int.class);
+                        m.invoke(timings, value);
+                    }
+                }
+                else if (name.equals("WR"))
+                {
+                    min = 5;
+                    max = sizes.get("WR") + sizes.get("WREHF");
+                    max = 4 + (int)Math.round(Math.pow(2, max)) - 1;
+
+                    if (value < min || value > max)
+                        valid = false;
+                    else
+                    {
+                        Method m = timings.getClass().getMethod("set_mc_wr", int.class);
+                        m.invoke(timings, value);
+                    }
+                }
+                else 
+                {
+                    max = (int)Math.round(Math.pow(2, sizes.get(name))) - 1;
+
+                    if (value < min || value > max)
+                        valid = false;
+                    else
+                    {
+                        ParentFieldPair pair = find_subfield(timings, name);
+                        pair.field.set(pair.parent, (byte)value);
+                    }
+                }
+    
+                if (!valid)
+                {
+                    txt.setBackground(invalid_color);
+                    return false;
+                }
+                else 
+                {
+                    txt.setBackground(Color.WHITE);
+                }
+            }
+            catch(NumberFormatException e)
+            {
+                txt.setBackground(invalid_color);
+                return false;
+            }
+            catch (IllegalAccessException | NoSuchMethodException | 
+                   InvocationTargetException e)
+            {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // obj must be VBIOS_STRAP_R9 or VBIOS_STRAP_RX
+    private ParentFieldPair find_subfield(Object obj, String name)
+    {
+        if (!(obj instanceof TimingsDecoder.VBIOS_STRAP_R9) &&
+            !(obj instanceof TimingsDecoder.VBIOS_STRAP_RX))
+            return null;
+
+        try {
+            Field[] fields = obj.getClass().getFields();
+            for (Field f : fields)
+            {
+                if (f.getName().equals("size")) continue;
+
+                for (Field sf : f.getType().getFields())
+                {
+                    if (sf.getName().equals(name))
+                        return new ParentFieldPair(f.get(obj), sf);
+                }
+            }
+        }
+        catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     private class TimingsPanelInfo
     {
         public String title;
         public String[] timings_names;
-        public int label_width;
+        public int label_width, num_rows;
 
-        TimingsPanelInfo(String title, String[] timings_names, int label_width)
+        TimingsPanelInfo(String title, String[] timings_names, int label_width, int num_rows)
         {
             this.title = title;
             this.timings_names = timings_names;
             this.label_width = label_width;
+            this.num_rows = num_rows;
+        }
+    }
+
+    private class ParentFieldPair
+    {
+        public Object parent;
+        public Field field;
+
+        ParentFieldPair(Object p, Field f)
+        {
+            parent = p;
+            field = f;
         }
     }
 
